@@ -10,10 +10,10 @@ export class Untis {
 
   constructor() {
     this.#untis = new WebUntis(
-      "ohgw",
+      process.env.UNTIS_SCHOOLID ?? "",
       process.env.UNTIS_USER ?? "",
       process.env.UNTIS_SECRET ?? "",
-      "ohgw.webuntis.com/"
+      process.env.UNTIS_URL ??""
     );
   }
 

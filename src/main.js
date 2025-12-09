@@ -24,7 +24,7 @@ async function addLesson(lesson, baseDate) {
       `${lesson.room ?? "No Room"} - ${lesson.shortName ?? lesson.name}`,
       startTime.toISOString(),
       endTime.toISOString(),
-      lesson.code // <-- Pass code here
+      lesson.code 
     );
 
     console.log(`Added Event for \x1b[4m\x1b[32m${lesson.name}\x1b[0m`);
@@ -69,7 +69,7 @@ async function addWeeks(startDate, endDate) {
   }
 }
 
-const todaayDate = new Date();
+const todaayDate = new Date(); //only run the script for current week;
 const nextDate = todaayDate;
 nextDate.setDate(nextDate.getDate() + 7);
 await addWeeks(todaayDate, nextDate);
