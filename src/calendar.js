@@ -10,7 +10,7 @@ export class GoogleCalendar {
   #client;
   #calendar;
   #calendarId =
-    "3095c43e29089bc37869e4f29848a67dde2cbdcc39b65ac720ec62b835057982@group.calendar.google.com";
+    "2752e252a72fb5972521f1899712229aa6a8d1b84c9ec81345156f8e5b539d33@group.calendar.google.com";
 
   constructor() {
     this.#client = new google.auth.GoogleAuth({
@@ -49,15 +49,33 @@ export class GoogleCalendar {
     }
   }
 
-  async addEvent(name, description, startDate, endDate) {
-    this.#calendar.events.insert({
-      calendarId: this.#calendarId,
-      resource: {
-        summary: name,
-        description: description,
-        start: { dateTime: startDate, timeZone: "Europe/Berlin" },
-        end: { dateTime: endDate, timeZone: "Europe/Berlin" },
-      },
-    });
-  }
+  async addEvent(name, description, startDate, endDate, code) {
+  // Map Untis codes to Google Calendar colorIds
+  const codeColorMap = {
+    cancelled: "11",   // Red
+    exam: "9",         // Blue
+    substitution: "10", // Yellow
+    default: "5",     // Green
+	irregular: "10",
+	null: "5",
+  };
+
+  const colorId = code ? (codeColorMap[code.toLowerCase()] || codeColorMap.default) : codeColorMap.default;
+
+  // Include code in the description
+  const fullDescription = code
+    ? `${description}\n\nStatus: ${code.toUpperCase()}`
+    : description;
+
+  await this.#calendar.events.insert({
+    calendarId: this.#calendarId,
+    resource: {
+      summary: name,
+      description: fullDescription,
+      start: { dateTime: startDate, timeZone: "Europe/Berlin" },
+      end: { dateTime: endDate, timeZone: "Europe/Berlin" },
+      colorId,
+    },
+  });
 }
+} 

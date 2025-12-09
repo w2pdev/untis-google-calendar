@@ -2,6 +2,7 @@ import { WebUntis } from "webuntis";
 import fs from "fs";
 import dotenv from "dotenv";
 import { fork } from "child_process";
+import { eachWeekOfInterval } from "date-fns";
 dotenv.config({ path: ".env" });
 
 export class Untis {
@@ -9,16 +10,16 @@ export class Untis {
 
   constructor() {
     this.#untis = new WebUntis(
-      "ottheinrich-gym wiesloch",
+      "ohgw",
       process.env.UNTIS_USER ?? "",
       process.env.UNTIS_SECRET ?? "",
-      "mese.webuntis.com/"
+      "ohgw.webuntis.com/"
     );
   }
 
   async getWeekTimetable() {
-    const start = new Date(2025, 8, 15, 10, 3, 30);
-    const end = new Date(2025, 8, 30, 10, 3, 30);
+    const start = new Date(2025, 12, 9, 10, 3, 30);
+    const end = new Date(2025, 12, 30, 10, 3, 30);
 
     console.log(start.toISOString());
 
@@ -66,60 +67,72 @@ export class Untis {
   }
 
   #mergeSubjects(timetable) {
-    if (!timetable || timetable.length === 0) return [];
+  if (!timetable || timetable.length === 0) return [];
 
-    const merged = [];
-    let prev = timetable[0];
-    console.log(timetable.length);
+  const merged = [];
+  let prev = timetable[0];
 
-    for (let i = 1; i < timetable.length; i++) {
-      const curr = timetable[i];
+  for (let i = 1; i < timetable.length; i++) {
+    const curr = timetable[i];
 
-      if (!curr?.startTime || !curr?.endTime || !curr?.name || !curr?.room) {
-        merged.push(prev);
-        prev = curr;
-        continue;
-      }
-
-      if (!prev?.startTime || !prev?.endTime || !prev?.name || !prev?.room) {
-        prev = curr;
-        continue;
-      }
-
-      const prevEnd = prev.endTime.hour * 60 + prev.endTime.minute;
-      const currStart = curr.startTime.hour * 60 + curr.startTime.minute;
-
-      const isSameSlot =
-        curr.name === prev.name &&
-        curr.room === prev.room &&
-        (currStart === prevEnd || currStart === prevEnd + 5);
-
-      if (isSameSlot) {
-        prev.endTime = { ...curr.endTime };
-      } else {
-        merged.push(prev);
-        prev = curr;
-      }
+    // If missing data → push as-is
+    if (!curr || !prev) {
+      merged.push(prev);
+      prev = curr;
+      continue;
     }
 
-    merged.push(prev);
-    return merged;
+    const prevEnd = prev.endTime.hour * 60 + prev.endTime.minute;
+    const currStart = curr.startTime.hour * 60 + curr.startTime.minute;
+
+    const isSameSlot =
+      curr.shortName === prev.shortName &&
+      curr.room === prev.room &&
+      curr.code === prev.code &&       // <-- NEW: do not merge if code differs
+      (currStart === prevEnd || currStart === prevEnd + 5);
+
+    if (isSameSlot) {
+      prev.endTime = { ...curr.endTime };
+    } else {
+      merged.push(prev);
+      prev = curr;
+    }
+  }
+
+  merged.push(prev);
+  return merged;
   }
 
   #processTimetableArray(timetable) {
-    let formattedTimetable = [];
-    timetable.forEach((e, i) => {
-      let startTime = this.#processTimes(e.startTime);
-      let endTime = this.#processTimes(e.endTime);
+  let formattedTimetable = [];
 
-      let shortName = e.su[0]?.name;
-      let name = this.#shortenSubject(e.su[0]?.longname);
+  timetable.forEach((e) => {
+    let startTime = this.#processTimes(e.startTime);
+    let endTime = this.#processTimes(e.endTime);
 
-      let room = e.ro[0]?.name;
-      formattedTimetable.push({ startTime, endTime, shortName, name, room });
+    let shortName = e.su?.[0]?.name;
+    let name = this.#shortenSubject(e.su?.[0]?.longname);
+    let room = e.ro?.[0]?.name;
+    let code = e.code ?? null;
+	let lsinfo = e.lstext ?? null;
+	let tname = name;
+	if (tname === undefined){
+		let str = String(lsinfo);
+		name = str;
+	}
+
+    formattedTimetable.push({
+      startTime,
+      endTime,
+      shortName,
+      name,
+      room,
+      code,
+	  lsinfo,
+	  
     });
-
-    return this.#mergeSubjects(formattedTimetable);
+  });
+  return this.#mergeSubjects(formattedTimetable);
   }
 
   async getChanges() {}

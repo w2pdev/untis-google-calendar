@@ -6,11 +6,11 @@ import { getMonday } from "./utils.js";
 const untis = new Untis();
 const calendar = new GoogleCalendar();
 
+
 async function addLesson(lesson, baseDate) {
-  // Create new date objects to avoid mutation
   const startTime = new Date(baseDate);
   const endTime = new Date(baseDate);
-  
+
   startTime.setHours(lesson.startTime.hour);
   startTime.setMinutes(lesson.startTime.minute);
   endTime.setHours(lesson.endTime.hour);
@@ -21,12 +21,14 @@ async function addLesson(lesson, baseDate) {
   try {
     await calendar.addEvent(
       lesson.name,
-      `${lesson.room} - ${lesson.shortName}`,
+      `${lesson.room ?? "No Room"} - ${lesson.shortName ?? lesson.name}`,
       startTime.toISOString(),
-      endTime.toISOString()
+      endTime.toISOString(),
+      lesson.code // <-- Pass code here
     );
-    console.log(`Added Events for \x1b[4m\x1b[32m${lesson.name}\x1b[0m`);
-    await new Promise((res) => setTimeout(res, 500));
+
+    console.log(`Added Event for \x1b[4m\x1b[32m${lesson.name}\x1b[0m`);
+    await new Promise((res) => setTimeout(res, 500)); // avoid rate limits
   } catch (e) {
     console.error(e.message);
   }
@@ -35,7 +37,6 @@ async function addLesson(lesson, baseDate) {
 async function updateCalendar(date) {
   const timetable = await untis.getFormattedTimetable();
   console.log(timetable);
-
   calendar.deleteWeek(date);
   const { monday, diff } = getMonday(date);
 
@@ -53,18 +54,22 @@ async function updateCalendar(date) {
     }
   }
 }
-
-//await updateCalendar(new Date(2025, 8, 29));
+//await updateCalendar(new Date(2025, 12, 9));
 
 async function addWeeks(startDate, endDate) {
+
   const weeks = eachWeekOfInterval({ start: startDate, end: endDate });
+  
 
   for (const week of weeks) {
     console.log(
-      `\x1b[34mAdding timetable for week \x1b[1m${week.toISOString()}\x1b[0m`
+      `\x1b[34mAdding timetable HI for week \x1b[1m${week.toISOString()}\x1b[0m`
     );
     await updateCalendar(new Date(week));
   }
 }
 
-await addWeeks(new Date(2025, 11, 29), new Date(2026, 2, 1));
+const todaayDate = new Date();
+const nextDate = todaayDate;
+nextDate.setDate(nextDate.getDate() + 7);
+await addWeeks(todaayDate, nextDate);
