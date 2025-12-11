@@ -1,7 +1,7 @@
 import { authenticate } from "@google-cloud/local-auth";
 import { google } from "googleapis";
 import dotenv from "dotenv";
-import { getMonday, getSunday } from "./utils.js";
+import { getMonday, getSunday, getMonda } from "./utils.js";
 dotenv.config({ path: "../.env" });
 
 const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
@@ -9,8 +9,7 @@ const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
 export class GoogleCalendar {
   #client;
   #calendar;
-  #calendarId =
-    "2752e252a72fb5972521f1899712229aa6a8d1b84c9ec81345156f8e5b539d33@group.calendar.google.com";
+  #calendarId = process.env.GOOGLE_CALENDAR_ID ?? "";
 
   constructor() {
     this.#client = new google.auth.GoogleAuth({
@@ -27,8 +26,8 @@ export class GoogleCalendar {
   async deleteWeek(date) {
     if (!date) date = new Date();
 
-    const { monday } = getMonday(date);
-    const { sunday } = getSunday(date);
+    const monday = getMonda(date);
+    const sunday = getSunday(date);
 
     const events = await this.#calendar.events.list({
       calendarId: this.#calendarId,
@@ -54,10 +53,10 @@ export class GoogleCalendar {
   const codeColorMap = {
     cancelled: "11",   // Red
     exam: "9",         // Blue
-    substitution: "10", // Yellow
-    default: "5",     // Green
-	irregular: "10",
-	null: "5",
+    substitution: "3", // Purple
+    default: "5",     // Orange
+	irregular: "3",   //Purple
+	null: "5", //Orange
   };
 
   const colorId = code ? (codeColorMap[code.toLowerCase()] || codeColorMap.default) : codeColorMap.default;

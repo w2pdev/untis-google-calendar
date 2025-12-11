@@ -2,10 +2,17 @@ import { eachWeekOfInterval } from "date-fns";
 import { Untis } from "./untis.js";
 import { GoogleCalendar } from "./calendar.js";
 import { getMonday } from "./utils.js";
+import { getMonda } from "./utils.js";
 
 const untis = new Untis();
 const calendar = new GoogleCalendar();
 
+
+const todayDate = new Date();
+todayDate.setDate(todayDate.getDate() + 0);
+const nextDate = new Date();
+nextDate.setDate(nextDate.getDate() + 7);
+await addWeeks(todayDate, nextDate);
 
 async function addLesson(lesson, baseDate) {
   const startTime = new Date(baseDate);
@@ -15,8 +22,6 @@ async function addLesson(lesson, baseDate) {
   startTime.setMinutes(lesson.startTime.minute);
   endTime.setHours(lesson.endTime.hour);
   endTime.setMinutes(lesson.endTime.minute);
-
-  console.log(startTime.toISOString());
 
   try {
     await calendar.addEvent(
@@ -34,15 +39,16 @@ async function addLesson(lesson, baseDate) {
   }
 }
 
-async function updateCalendar(date) {
-  const timetable = await untis.getFormattedTimetable();
-  console.log(timetable);
+async function updateCalendar(date, count) {
+
+  const timetable = await untis.getFormattedTimetable(date, count);
   calendar.deleteWeek(date);
-  const { monday, diff } = getMonday(date);
+  const monday = getMonda(date);
+  const currentDay = new Date(monday);
 
   for (let i = 0; i < timetable.length; i++) {
     // Create a new date for each day to avoid mutation
-    const currentDay = new Date(monday);
+    
     currentDay.setDate(monday.getDate() + i);
     console.log(`\x1b[4m Adding Events for ${currentDay.toDateString()}\x1b[0m`);
 
@@ -54,22 +60,21 @@ async function updateCalendar(date) {
     }
   }
 }
-//await updateCalendar(new Date(2025, 12, 9));
+
 
 async function addWeeks(startDate, endDate) {
-
-  const weeks = eachWeekOfInterval({ start: startDate, end: endDate });
-  
-
-  for (const week of weeks) {
-    console.log(
-      `\x1b[34mAdding timetable HI for week \x1b[1m${week.toISOString()}\x1b[0m`
+	console.log(
+      `\x1b[34mAdding timetable HI for week \x1b[1m${startDate.toISOString()}\x1b[0m`
     );
-    await updateCalendar(new Date(week));
-  }
-}
+ 
+  await updateCalendar(startDate, 5); //Woche 1
+  
+  console.log(
+      `\x1b[34mAdding timetable HI for week \x1b[1m${endDate.toISOString()}\x1b[0m`
+    );
 
-const todaayDate = new Date(); //only run the script for current week;
-const nextDate = todaayDate;
-nextDate.setDate(nextDate.getDate() + 7);
-await addWeeks(todaayDate, nextDate);
+  await updateCalendar(endDate, 5);  //Woche 2
+    
+  }
+
+

@@ -15,11 +15,11 @@ export class Untis {
       process.env.UNTIS_SECRET ?? "",
       process.env.UNTIS_URL ??""
     );
-  }
 
+  }
   async getWeekTimetable() {
-    const start = new Date(2025, 12, 9, 10, 3, 30);
-    const end = new Date(2025, 12, 30, 10, 3, 30);
+    const start = new Date();
+    const end = new Date();
 
     console.log(start.toISOString());
 
@@ -137,23 +137,26 @@ export class Untis {
 
   async getChanges() {}
 
-  async getFormattedTimetable() {
-    const weekTimetable = [];
-    const today = new Date();
-    const dayOfWeek = today.getDay();
+  async getFormattedTimetable( date , count ) {
+	const weekTimetable = [];
+	const today = new Date(date);
+	const dayOfWeek = today.getDay();
 
-    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-    const monday = new Date(today);
-    monday.setDate(diff);
+	// Calculate Monday
+	const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+	const monday = new Date(today);
+	monday.setDate(diff);
 
-    for (let i = 0; i < 5; i++) {
-      monday.setDate(diff + i);
-      console.log(`\x1b[4m${monday.toDateString()}\x1b[0m`);
+	for (let i = 0; i < count; i++) {
+		const currentDay = new Date(monday);   // clone Monday
+		currentDay.setDate(monday.getDate() + i);
 
-      const timetable = await this.getDayTimetable(monday);
-      weekTimetable.push(this.#processTimetableArray(timetable));
-    }
+		console.log(`\x1b[4m${currentDay.toDateString()}\x1b[0m`);
+		const timetable = await this.getDayTimetable(currentDay);
+		weekTimetable.push(this.#processTimetableArray(timetable));
+	}
 
-    return weekTimetable;
-  }
+	return weekTimetable;
+	}
+	
 }

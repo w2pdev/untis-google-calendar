@@ -10,15 +10,26 @@ export function getWeeksMonday() {
   return monday;
 }
 
-export function getMonday(date) {
-  const dayOfWeek = date.getDay();
-  const diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-  const monday = new Date(date);
+export function getMonday({ date }) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
 
-  monday.setDate(diff);
-  monday.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + diff);
 
-  return { monday, diff };
+  return { monday: d, diff };
+}
+
+export function getMonda(date) {
+  const d = new Date(date);                    // clone
+  const day = d.getDay();                      // 0=Sun,1=Mon,...
+
+  // Calculate how many days to subtract to reach Monday
+  const diff = (day === 0 ? -6 : 1) - day;
+
+  d.setDate(d.getDate() + diff);
+  
+  return d;                                    // Monday
 }
 
 export function getWeeksSunday() {
@@ -31,10 +42,10 @@ export function getWeeksSunday() {
 }
 
 export function getSunday(date) {
-  const { monday, diff } = getMonday(date);
+  const monday = getMonda(date);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
   sunday.setHours(23, 59);
 
-  return { sunday, diff };
+  return sunday;
 }
