@@ -1,25 +1,25 @@
-import { WebUntis } from "webuntis";
-import fs from "fs";
+import { WebUntisSecretAuth } from 'webuntis';
 import dotenv from "dotenv";
-import { fork } from "child_process";
-import { eachWeekOfInterval } from "date-fns";
+import { authenticator as Authenticator } from 'otplib';
 dotenv.config({ path: ".env" });
 
 export class Untis {
   #untis;
 
   constructor() {
-    this.#untis = new WebUntis(
+    this.#untis = new WebUntisSecretAuth(
       process.env.UNTIS_SCHOOLID ?? "",
       process.env.UNTIS_USER ?? "",
       process.env.UNTIS_SECRET ?? "",
-      process.env.UNTIS_URL ??""
+      process.env.UNTIS_URL ??"",
+      "Calendar",
+      Authenticator
     );
 
   }
+  
   async getWeekTimetable() {
     const start = new Date();
-    const end = new Date();
 
     console.log(start.toISOString());
 
@@ -88,7 +88,7 @@ export class Untis {
     const isSameSlot =
       curr.shortName === prev.shortName &&
       curr.room === prev.room &&
-      curr.code === prev.code &&       // <-- NEW: do not merge if code differs
+      curr.code === prev.code &&       
       (currStart === prevEnd || currStart === prevEnd + 5);
 
     if (isSameSlot) {
@@ -141,6 +141,7 @@ export class Untis {
 	const weekTimetable = [];
 	const today = new Date(date);
 	const dayOfWeek = today.getDay();
+  console.log(`\x1b[4m\x1b[32mGetting untis data\x1b[0m`);
 
 	// Calculate Monday
 	const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
